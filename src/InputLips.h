@@ -37,6 +37,10 @@ class InputLips : public Input {
     double Smain0;
     double rho;
 
+    // accumulated vibrato and tremolo phases (radians). Integrating the
+    // frequency avoids phase jumps when vibfreq/tremfreq change over time
+    double vibPhase, tremPhase;
+
     BreakpointFunction *bf_Sr, *bf_mu, *bf_sigma, *bf_H, *bf_wint;
     BreakpointFunction *bf_tremamp, *bf_tremfreq, *bf_noise, *bf_pm;
     BreakpointFunction *bf_vibamp, *bf_vibfreq, *bf_omega;

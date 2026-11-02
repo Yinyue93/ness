@@ -35,6 +35,9 @@ InputLips::InputLips(Component *comp, vector<double> &Sr, vector<double> &mu, ve
     y1 = 0.0;
     y2 = 0.0;
 
+    vibPhase = 0.0;
+    tremPhase = 0.0;
+
     // lip effective surface area
     bf_Sr = new BreakpointFunction(Sr.data(), Sr.size() / 2, kk);
 
@@ -113,7 +116,8 @@ void InputLips::runTimestep(int n, double *s, double *s1, double *s2)
 
     double vibamp = bf_vibamp->getValue();
     double vibfreq = bf_vibfreq->getValue();
-    double vibrato = 1.0 + vibamp * sin(2.0 * M_PI * vibfreq * (((double)n)*kk));
+    double vibrato = 1.0 + vibamp * sin(vibPhase);
+    vibPhase = fmod(vibPhase + 2.0 * M_PI * vibfreq * kk, 2.0 * M_PI);
     double omega = 2.0 * M_PI * bf_omega->getValue() * vibrato;
 
     double Srint = bf_Sr->getValue();
@@ -134,7 +138,8 @@ void InputLips::runTimestep(int n, double *s, double *s1, double *s2)
 
     double tremamp = bf_tremamp->getValue();
     double tremfreq = bf_tremfreq->getValue();
-    double trem = 1.0 + tremamp * sin(2.0 * M_PI * tremfreq * (((double)n)*kk));
+    double trem = 1.0 + tremamp * sin(tremPhase);
+    tremPhase = fmod(tremPhase + 2.0 * M_PI * tremfreq * kk, 2.0 * M_PI);
     double noise = 2.0 * bf_noise->getValue() * (getRand() - 0.5);
     double pm = bf_pm->getValue() * (trem * (1.0 + noise));
 
