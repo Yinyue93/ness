@@ -74,6 +74,24 @@ The `string_def_gen` function takes 7 parameters:
 - `length` - This is a scalar value and specifies the length of the strings in metres.
 - `T60_0` - This array contains one element per string, specifying the T60 at d.c. for each string.
 - `T60_1000` - Same as `T60_0`, but specifies the T60 at 1000Hz for each string.
+- `tension` (optional) - This array contains one element per string, specifying the string tension in Newtons. Real guitar strings are typically 60-140 N.
+
+Without `tension`, each string is treated as a solid rod of its material, and its radius is chosen to give the requested inharmonicity. At guitar pitches with typical inharmonicity values this gives unrealistically thin, slack strings. For example, the low E in the example below comes out at about 0.03 mm radius and 0.2 N tension, so plucks displace it far more than a real string, and it can collide with the frets. The function prints a warning when any string's tension is below 20 N.
+
+With `tension`, the function instead solves for a radius and an *effective* density that give the requested pitch, tension and inharmonicity, using the material's Young's modulus. For a plain steel string with a realistic inharmonicity, the density comes out close to steel's. For a wound string it comes out higher, which matches a real wound string: the winding adds mass but little bending stiffness. The simulation depends only on the string's mass per length and bending stiffness, so the equivalent string behaves like the real one. Inharmonicity values of roughly 1e-5 to 3e-4 are typical for guitar strings.
+
+Example with realistic strings (light acoustic set, standard tuning):
+
+```
+notes = [-20 -15 -10 -5 -1 4];
+material = [1 1 1 1 1 1];
+inharmonicity = [2.66e-4 9.52e-5 3.02e-5 9.62e-6 6.07e-5 1.90e-5];
+T60_0 = [15 14 13 12 10 9];
+T60_1000 = [6 6 5.5 5 5 5];
+tension = [116 128 136 135 103 104];
+
+string_def = string_def_gen(mat_tab, notes, material, inharmonicity, 0.65, T60_0, T60_1000, tension);
+```
 
 The `fret_def_gen` function generates an array of frets that are exponentially spaced (i.e. evenly spaced in terms of pitch). It takes 3 or 4 parameters:
 

@@ -16,7 +16,7 @@ using namespace std;
 #endif
 
 MatlabFunction_StringDefGen::MatlabFunction_StringDefGen()
-    : MatlabFunction("string_def_gen", 7, 7)
+    : MatlabFunction("string_def_gen", 7, 8)
 {
 }
 
@@ -49,6 +49,19 @@ bool MatlabFunction_StringDefGen::execute(MatlabCellContent *result)
 	return false;
     }
 
+    // optional 8th parameter: tension in Newtons for each string
+    bool haveTension = (paramCount >= 8);
+    if (haveTension) {
+	if (!checkParameter1DArray(7)) return false;
+	if (params[7].array.width != string_num) {
+	    logMessage(5, "Error: tension array size must match number of strings for string_def_gen");
+	    return false;
+	}
+    }
+
+    int lowTensionCount = 0;
+    double lowestTension = 1e30;
+
     // allocate the output array
     result->type = CELL_ARRAY;
     result->array.width = 7;
@@ -70,14 +83,45 @@ bool MatlabFunction_StringDefGen::execute(MatlabCellContent *result)
 
 	double inharmonicity = params[3].array.data[i];
 
-	// compute radius
-	double r = ((4.0 * L * L) / M_PI) * freq * sqrt(rho * inharmonicity / E);
+	double r, A, T;
+	if (haveTension) {
+	    /*
+	     * Tension given. Solve for the radius r and an effective density
+	     * so that the string has the requested pitch, tension and
+	     * inharmonicity B, using the material's Young's modulus:
+	     *
+	     *   T = 4 L^2 f^2 rho A,   B = pi^2 E I / (T L^2),   I = pi r^4 / 4
+	     *   =>  r^4 = 4 T L^2 B / (pi^3 E),   rho = T / (4 pi L^2 f^2 r^2)
+	     *
+	     * For a plain string with a realistic B the density comes out
+	     * close to the material's. For a wound string it comes out higher,
+	     * because the winding adds mass but little bending stiffness. The
+	     * model only depends on rho*A and E*I, so this "equivalent" string
+	     * behaves like the real wound one.
+	     */
+	    T = params[7].array.data[i];
+	    if ((T <= 0.0) || (inharmonicity <= 0.0)) {
+		logMessage(5, "Error: tension and inharmonicity must be positive in string_def_gen");
+		return false;
+	    }
+	    r = pow((4.0 * T * L * L * inharmonicity) / (M_PI * M_PI * M_PI * E), 0.25);
+	    A = M_PI * r * r;
+	    rho = T / (4.0 * L * L * freq * freq * A);
+	    logMessage(1, "string_def_gen: string %d, T=%f N, r=%e m, effective density=%f",
+		       i+1, T, r, rho);
+	}
+	else {
+	    // original behaviour: solid string of the given material. The
+	    // radius is fixed by the inharmonicity, and the tension follows
+	    r = ((4.0 * L * L) / M_PI) * freq * sqrt(rho * inharmonicity / E);
+	    A = M_PI * r * r;
+	    T = (4.0 * L * L) * rho * A * freq * freq;
 
-	// compute area
-	double A = M_PI * r * r;
-
-	// compute tension
-	double T = (4.0 * L * L) * rho * A * freq * freq;
+	    if (T < 20.0) {
+		lowTensionCount++;
+		if (T < lowestTension) lowestTension = T;
+	    }
+	}
 
 	// fetch loss parameters
 	double T60_0 = params[5].array.data[i];
@@ -90,6 +134,18 @@ bool MatlabFunction_StringDefGen::execute(MatlabCellContent *result)
 	result->array.data[7*i + 4] = rho;
 	result->array.data[7*i + 5] = T60_0;
 	result->array.data[7*i + 6] = T60_1000;
+    }
+
+    // the instrument file may be parsed more than once (format detection),
+    // so only print the warning the first time
+    static bool lowTensionWarned = false;
+    if ((lowTensionCount > 0) && (!lowTensionWarned)) {
+	lowTensionWarned = true;
+	logMessage(5, "Warning: string_def_gen produced %d string(s) with very low tension "
+		   "(lowest %.2f N; real guitar strings are around 60-140 N). Plucks will "
+		   "displace these strings far more than a real instrument. Pass the "
+		   "tensions as an optional 8th argument for realistic strings.",
+		   lowTensionCount, lowestTension);
     }
 
     return true;
