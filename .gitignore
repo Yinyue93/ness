@@ -42,3 +42,13 @@ unittests/testlog.txt
 
 # Emacs backup files
 *~
+
+# Rendered audio output. WAV files used as inputs by the examples and tests
+# are kept explicitly.
+*.wav
+!examples/*.wav
+!unittests/*.wav
+
+# Python bytecode (user_tests/brass_tools)
+__pycache__/
+*.pyc
