@@ -30,6 +30,11 @@ class Output {
     double *getData() { return data; }
     double getPan() { return pan; }
 
+    // gains applied to this output in the stereo mix. Single source of
+    // truth for the pan law, used both for mixing and for finding the peak
+    double getLeftGain() { return 1.0 - ((pan + 1.0) / 2.0); }
+    double getRightGain() { return (pan + 1.0) / 2.0; }
+
     void saveRawData(string filename);
     void highPassFilter();
     double getMaxValue();

@@ -136,17 +136,22 @@ double Instrument::getMaxOutput()
 {
     int i, j;
     double max;
-    double curr;
+    double left, right;
 
     max = 0.0;
-    // get absolute maximum across entire output space
+    // get absolute maximum of the left and right channels of the stereo
+    // mix, using the same pan gains as the mixer. (The mono sum is not a
+    // safe bound: one channel can exceed it when outputs differ in sign.)
     for (i = 0; i < GlobalSettings::getInstance()->getNumTimesteps(); i++) {
-	curr = 0.0;
+	left = 0.0;
+	right = 0.0;
 	for (j = 0; j < outputs.size(); j++) {
-	    curr += outputs[j]->getData()[i];
+	    double v = outputs[j]->getData()[i];
+	    left += outputs[j]->getLeftGain() * v;
+	    right += outputs[j]->getRightGain() * v;
 	}
-	curr = fabs(curr);
-	if (curr > max) max = curr;
+	if (fabs(left) > max) max = fabs(left);
+	if (fabs(right) > max) max = fabs(right);
     }
     logMessage(1, "Max output is %f", max);
     return max;
