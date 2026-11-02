@@ -44,6 +44,12 @@ bool ScoreParserBrass::parse(Instrument *instrument)
 
 #define PROCESS_VALVE_ARRAY(nm, vec) \
     if (arr.name == nm) { \
+        if (arr.width != (Nvalve + 1)) { \
+            logMessage(5, "Error in brass score: %s must have %d columns (time, then one per valve), not %d", \
+                       nm, Nvalve + 1, arr.width); \
+            delete[] valvevibfreq; delete[] valvevibamp; delete[] valveopening; \
+            return false; \
+        } \
         int arrsz = arr.width * arr.height; \
 	int arrpos = 0; \
         while (arrpos < arrsz) { \
@@ -118,6 +124,62 @@ bool ScoreParserBrass::parseInternal()
 	PROCESS_VALVE_ARRAY("valvevibfreq", valvevibfreq);
 	PROCESS_VALVE_ARRAY("valvevibamp", valvevibamp);
 	PROCESS_VALVE_ARRAY("valveopening", valveopening);
+    }
+
+    /*
+     * Validate the breakpoint arrays before creating the inputs. An empty
+     * array would make the breakpoint functions read past the end of their
+     * data, and an odd-length one isn't a list of (time, value) pairs.
+     */
+    struct { const char *name; vector<double> *vec; bool required; } lipArrays[] = {
+	{ "Sr", &Sr, true }, { "mu", &mu, true }, { "sigma", &sigma, true },
+	{ "H", &H, true }, { "w", &w, true }, { "pressure", &pressure, true },
+	{ "lip_frequency", &lip_frequency, true },
+	{ "vibamp", &vibamp, false }, { "vibfreq", &vibfreq, false },
+	{ "tremamp", &tremamp, false }, { "tremfreq", &tremfreq, false },
+	{ "noiseamp", &noiseamp, false }
+    };
+    string missing;
+    for (i = 0; i < (int)(sizeof(lipArrays) / sizeof(lipArrays[0])); i++) {
+	vector<double> *vec = lipArrays[i].vec;
+	if ((vec->size() % 2) != 0) {
+	    logMessage(5, "Error in brass score: %s must be a list of [time, value] pairs",
+		       lipArrays[i].name);
+	    delete[] valvevibfreq; delete[] valvevibamp; delete[] valveopening;
+	    return false;
+	}
+	if (vec->empty()) {
+	    if (lipArrays[i].required) {
+		if (!missing.empty()) missing += ", ";
+		missing += lipArrays[i].name;
+	    }
+	    else {
+		// optional modulation: default to none
+		vec->push_back(0.0);
+		vec->push_back(0.0);
+	    }
+	}
+    }
+    if (!missing.empty()) {
+	logMessage(5, "Error in brass score %s: missing required array(s): %s",
+		   filename.c_str(), missing.c_str());
+	delete[] valvevibfreq; delete[] valvevibamp; delete[] valveopening;
+	return false;
+    }
+    for (i = 0; i < Nvalve; i++) {
+	// valves default to fully open (default tube only), with no vibrato
+	if (valveopening[i].empty()) {
+	    valveopening[i].push_back(0.0);
+	    valveopening[i].push_back(1.0);
+	}
+	if (valvevibfreq[i].empty()) {
+	    valvevibfreq[i].push_back(0.0);
+	    valvevibfreq[i].push_back(0.0);
+	}
+	if (valvevibamp[i].empty()) {
+	    valvevibamp[i].push_back(0.0);
+	    valvevibamp[i].push_back(0.0);
+	}
     }
 
     InputLips *lips = new InputLips(brass, Sr, mu, sigma, H, w, pressure, lip_frequency, vibamp, vibfreq,

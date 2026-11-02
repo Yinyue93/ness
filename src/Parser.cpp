@@ -47,7 +47,11 @@ int Parser::parseTextFile()
 	string type;
 
 	ss >> type;
-	if (!ss.good()) continue;
+	// skip only lines with no token at all. (Checking good() here used to
+	// also skip any line consisting of a single token, because reading it
+	// reaches end-of-line. That made Matlab-style files such as brass
+	// scores, which have no spaces, look like valid but empty text files.)
+	if (ss.fail()) continue;
 
 	// call class-specific type handler
 	result = handleItem(type, ss);

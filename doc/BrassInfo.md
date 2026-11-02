@@ -97,7 +97,9 @@ fbeg=6;%flare power
 
 The score file contains the information related to how the instrument is played. This includes: normalisation factor of output, length of gesture (s), lip parameters (including effective area (m<sup>2</sup>), width (m), and mass (kg); damping; and equilibrium separation (m)), lip frequency (Hz), mouth pressure (Pa), noise amplitude, and valve openings. There are also modulation control parameters for lip frequency, mouth pressure and valve opening which include the rate and strength of modulation. All control parameters are breakpoint functions of time - value pairs.
 
-The normalisation factor sets the range of the outputted .wav file, e.g. for a normalisation factor of 1, the output will have a range between -0.5 and 0.5.
+The normalisation factor sets the range of the outputted .wav file, e.g. for a normalisation factor of 1, the output will have a range between -1 and 1 (digital full scale); 0.95 leaves a little headroom.
+
+The arrays `Sr`, `mu`, `sigma`, `H`, `w`, `pressure` and `lip_frequency` are required. `vibamp`, `vibfreq`, `tremamp`, `tremfreq` and `noiseamp` default to 0 if left out, and the valves default to fully open (`valveopening` 1) with no vibrato. Each valve array must have one time column plus one column per valve.
 
 ### Lip Parameters
 

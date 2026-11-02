@@ -194,6 +194,13 @@ static void mainLoop()
 	// that is all zeros
 	start = Input::getFirstInputTimestep();
 	logMessage(1, "Starting from timestep %d", start);
+
+	if ((start >= NF) && (!GlobalSettings::getInstance()->getImpulse())) {
+	    logMessage(5, "Warning: the score file did not add any inputs (plucks, strikes, "
+		       "bows, lips, ...) that start before the end of the simulation, so the "
+		       "output will be silent. Check that the score file matches the "
+		       "instrument type.");
+	}
     }
 
     for (n = start; n < NF; n++) {

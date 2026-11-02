@@ -9,6 +9,7 @@
 
 #ifndef GUITAR_ONLY
 #include "ScoreParserBrass.h"
+#include "BrassInstrument.h"
 #endif
 
 #ifndef BRASS_ONLY
@@ -132,6 +133,15 @@ bool ScoreParser::parseScore(string filename, Instrument *instrument, string hin
     result = parser->parse(instrument);
     delete parser;
     if (result) return result;
+
+    // a brass instrument can only be driven by a brass (or XML) score, so
+    // don't offer the file to the other formats' parsers
+    if (dynamic_cast<BrassInstrument*>(instrument->getComponentByName("brass"))) {
+	parser = new ScoreParserBrass(filename);
+	result = parser->parse(instrument);
+	delete parser;
+	return result;
+    }
 
     parser = new ScoreParserZero(filename);
     result = parser->parse(instrument);
