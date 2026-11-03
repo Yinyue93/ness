@@ -55,6 +55,13 @@ The NESS project created models for several different types of instruments - lin
 
 For more detailed information about specific instrument models, please consult the files in the `doc` directory.
 
+### Instrument bodies for bowed strings
+
+The bowed-string model simulates the strings only, so on its own it sounds like strings with no instrument around them. An instrument file can add a body filter that stands in for the wooden body of a violin, viola or cello. In a Matlab-format bowed-string instrument file, add
+
+`  body = 'viola';`
+
+and in an XML instrument file add `<body>viola</body>` inside `<instrument>`. The types are `violin`, `viola`, `cello` and `none` (the default). The body is a synthetic modal filter: typical low body resonances plus dense, randomly placed (but fixed) higher resonances with a peak around 1.3-2.5 kHz, depending on the instrument. It is applied to every output after the simulation, before the WAV files are written. Raw outputs (`-r`) are saved before the body filter, so they are still the plain string signals.
 
 ## Command Line Options
 

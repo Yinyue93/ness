@@ -14,6 +14,7 @@
     <ClCompile Include="Airbox.cpp" />
     <ClCompile Include="AirboxIndexed.cpp" />
     <ClCompile Include="Bar.cpp" />
+    <ClCompile Include="BodyFilter.cpp" />
     <ClCompile Include="BowedString.cpp" />
     <ClCompile Include="BrassInstrument.cpp" />
     <ClCompile Include="BrassInstrument_avx.cpp" />
@@ -109,6 +110,7 @@
     <ClInclude Include="Airbox.h" />
     <ClInclude Include="AirboxIndexed.h" />
     <ClInclude Include="Bar.h" />
+    <ClInclude Include="BodyFilter.h" />
     <ClInclude Include="BowedString.h" />
     <ClInclude Include="BrassInstrument.h" />
     <ClInclude Include="BreakpointFunction.h" />

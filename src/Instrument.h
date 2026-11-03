@@ -16,6 +16,7 @@
 #include "Connection.h"
 #include "Profiler.h"
 #include "Task.h"
+#include "BodyFilter.h"
 
 #ifndef NO_THREADS
 #include "WorkerThread.h"
@@ -47,6 +48,11 @@ class Instrument {
     vector<Output*> *getOutputs() { return &outputs; }
     vector<Connection*> *getConnections() { return &connections; }
 
+    // optional body filter applied to every output before the WAVs are written
+    // (after the raw outputs are saved). The instrument takes ownership.
+    void setBody(BodyFilter *bf) { if (body) delete body; body = bf; }
+    BodyFilter *getBody() { return body; }
+
  protected:
     double getMaxOutput();
 
@@ -75,6 +81,8 @@ class Instrument {
 #endif
 
     Profiler *profiler;
+
+    BodyFilter *body;
 };
 
 #endif

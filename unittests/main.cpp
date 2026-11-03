@@ -39,6 +39,7 @@
 #include "TestOutput.h"
 #include "TestOutputDifference.h"
 #include "TestOutputPressure.h"
+#include "TestBodyFilter.h"
 
 #include "TestConnectionP2P.h"
 #include "TestConnectionZero.h"
@@ -169,6 +170,7 @@ int main(int argc, char *argv[])
     runner.addTest(TestOutput::suite());
     runner.addTest(TestOutputDifference::suite());
     runner.addTest(TestOutputPressure::suite());
+    runner.addTest(TestBodyFilter::suite());
 
     runner.addTest(TestConnectionP2P::suite());
     runner.addTest(TestConnectionZero::suite());

@@ -21,6 +21,7 @@ using namespace std;
 Instrument::Instrument()
 {
     profiler = NULL;
+    body = NULL;
 #ifndef NO_THREADS
     workerThreads = NULL;
 #endif
@@ -55,6 +56,9 @@ Instrument::~Instrument()
 
     if (profiler) {
 	delete profiler;
+    }
+    if (body) {
+	delete body;
     }
 }
 
@@ -184,6 +188,13 @@ void Instrument::saveOutputs(string outputname, bool individual, bool raw)
 	}
     }
     
+    // pass the outputs through the instrument body, if there is one
+    if (body) {
+	for (i = 0; i < outputs.size(); i++) {
+	    body->apply(outputs[i]->getData(), gs->getNumTimesteps(), gs->getSampleRate());
+	}
+    }
+
     // then high-pass filter the channels if requested
     if (gs->getHighPassOn()) {
 	logMessage(1, "Applying high-pass filter");

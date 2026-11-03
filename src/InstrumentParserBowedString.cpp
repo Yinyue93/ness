@@ -10,6 +10,7 @@
 #include "BowedString.h"
 #include "MatlabParser.h"
 #include "Output.h"
+#include "BodyFilter.h"
 #include "Logger.h"
 #include "GlobalSettings.h"
 
@@ -53,10 +54,20 @@ Instrument *InstrumentParserBowedString::parse()
     vector<MatlabScalar> *scalars = matlabParser.getScalars();
     vector<MatlabStruct> *structs = matlabParser.getStructs();
     for (i = 0; i < strings->size(); i++) {
-	if (strings->at(i).name == "instrument") {
+	if ((strings->at(i).name == "instrument") && (instrtype == "")) {
 	    logMessage(1, "Bowed string instrument type is %s", strings->at(i).value.c_str());
 	    instrtype = strings->at(i).value;
-	    break;
+	}
+	else if (strings->at(i).name == "body") {
+	    // optional instrument body: 'violin', 'viola', 'cello' or 'none'
+	    string bodytype = strings->at(i).value;
+	    if (!BodyFilter::isValidType(bodytype)) {
+		logMessage(3, "Error parsing bowed string instrument file: unknown body '%s' (use 'violin', 'viola', 'cello' or 'none')", bodytype.c_str());
+		delete instrument;
+		return NULL;
+	    }
+	    logMessage(1, "Bowed string body is %s", bodytype.c_str());
+	    instrument->setBody(BodyFilter::create(bodytype));
 	}
     }
 

@@ -24,6 +24,9 @@
     <ClInclude Include="Bar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BodyFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="BowedString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -336,6 +339,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Bar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BodyFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BowedString.cpp">

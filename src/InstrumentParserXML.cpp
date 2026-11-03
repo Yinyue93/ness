@@ -33,6 +33,7 @@
 #include "Bar.h"
 #include "Fretboard.h"
 #include "BowedString.h"
+#include "BodyFilter.h"
 #include "ModalPlate.h"
 #include "OutputModal.h"
 #endif
@@ -132,6 +133,23 @@ Instrument *InstrumentParserXML::parse()
 	    else {
 		logMessage(1, "Setting normalise outs to %d", (int)no);
 		GlobalSettings::getInstance()->setNormaliseOuts(no);
+	    }
+	}
+	else if (!xmlStrcmp(node->name, (const xmlChar *)"body")) {
+	    // optional instrument body filter: violin, viola, cello or none
+	    string bodytype = "none";
+	    if (node->xmlChildrenNode != NULL) {   // <body/> means no body
+		char *val = parseString(node);
+		bodytype = val;
+		free(val);
+	    }
+	    if (!BodyFilter::isValidType(bodytype)) {
+		logMessage(5, "Unknown body '%s' in instrument file (use violin, viola, cello or none)", bodytype.c_str());
+		success = false;
+	    }
+	    else {
+		logMessage(1, "Setting instrument body to %s", bodytype.c_str());
+		instrument->setBody(BodyFilter::create(bodytype));
 	    }
 	}
 #ifndef BRASS_ONLY
