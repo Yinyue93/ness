@@ -57,6 +57,11 @@ void TestBowedString::testBowedString()
     //
     // Test with bow
     //
+    // (Expected values for the bow and finger tests were regenerated when
+    // the bow/finger interpolation stencil was moved back by one grid point
+    // to the requested position, and the fabs(r) typo in the vector contact
+    // Newton was fixed.)
+    //
     //============================================================
     vector<double> bowtime, bowpos, bowforcew, bowforceu;
 
@@ -91,7 +96,7 @@ void TestBowedString::testBowedString()
     }
 
     // check value
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(1.59885654511967e-5, bs->getU1()[16], 1e-10);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(1.33977799571368e-5, bs->getU1()[16], 1e-10);
 
     // run some more
     for (; i < 20000; i++) {
@@ -100,7 +105,7 @@ void TestBowedString::testBowedString()
     }
 
     // check value again
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.000108407105708584, bs->getU1()[16], 1e-10);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.000186503953726136, bs->getU1()[16], 1e-10);
 
     delete bs;
 
@@ -161,7 +166,7 @@ void TestBowedString::testBowedString()
     }
 
     // check value
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(9.96857615919453e-5, bs->getU1()[16], 1e-10);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(-1.84348167857752e-6, bs->getU1()[16], 1e-10);
 
     // run some more
     for (; i < 20000; i++) {
@@ -170,7 +175,7 @@ void TestBowedString::testBowedString()
     }
 
     // check value again
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-7.40680450263896e-5, bs->getU1()[16], 1e-10);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(-0.000144579670849821, bs->getU1()[16], 1e-10);
 
     delete bs;
 }

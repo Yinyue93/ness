@@ -49,6 +49,7 @@ struct Bow {
     double JJpJJ2;
 
     bool isFinger;
+    bool warnedPosition;  // already warned that the position was clamped
     double *vibrato;
 
     double Kw, Ku, alpha, beta, lambda, M;

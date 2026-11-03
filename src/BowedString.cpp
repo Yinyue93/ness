@@ -743,7 +743,7 @@ void BowedString::runTimestep(int n)
 
       	    // compute R
 	    for (i = 0; i < nobj; i++) {
-		if (fabs(r[i] > epsr)) {
+		if (fabs(r[i]) > epsr) {
 		    maxr[i] = fabs(r[i]);
 		    rdelta2pos[i] = max(r[i] + bows[i].delta2, 0.0);
 		    Pprime[i] = bows[i].Kw * pow(rdelta2pos[i], bows[i].alpha);
@@ -1227,6 +1227,20 @@ int BowedString::getBowInterpInfo(Bow &bow, double coeffs[4], int n)
 
     if (bow.vibrato) pos += bow.vibrato[n];
 
+    // The 4-point stencil uses grid points pos_int-1 .. pos_int+2, which must
+    // be interior points (1 .. N-1). Closer to the ends than that it would read
+    // outside the state arrays, so clamp (a bow or finger within two grid
+    // points of the nut or bridge is not meaningful at this resolution anyway).
+    double posmin = 2.0 / N, posmax = (N - 2.0) / N - 1e-9;
+    if ((pos < posmin) || (pos > posmax)) {
+	if (!bow.warnedPosition) {
+	    logMessage(5, "Warning: %s position %f on %s is too close to the end of the string; using %f (the limit at this sample rate)",
+		       bow.isFinger ? "finger" : "bow", pos, name.c_str(), (pos < posmin) ? posmin : posmax);
+	    bow.warnedPosition = true;
+	}
+	pos = (pos < posmin) ? posmin : posmax;
+    }
+
     int pos_int = (int)floor(pos * N);
     double pos_frac = (pos * N) - (double)pos_int;
 
@@ -1235,7 +1249,12 @@ int BowedString::getBowInterpInfo(Bow &bow, double coeffs[4], int n)
     coeffs[2] = -pos_frac * (pos_frac + 1.0) * (pos_frac - 2.0) * 0.5;
     coeffs[3] = pos_frac * (pos_frac + 1.0) * (pos_frac - 1.0) / 6.0;
 
-    return pos_int;
+    // Return the state index of the stencil's second point (grid point
+    // pos_int): callers read w[Ji+j-1], j = 0..3, and w[0] is grid point 1
+    // (as in GuitarString). Returning pos_int put every bow and finger one
+    // grid point (1/N of the string) nearer the bridge than asked, which made
+    // fingered notes sharp by up to ~60 cents at 44.1 kHz.
+    return pos_int - 1;
 }
 
 
@@ -1315,6 +1334,7 @@ void BowedString::addBow(double w0, double vw0, double u0, double vu0,
 
 	numFingers++;
     }
+    bow.warnedPosition = false;
     bow.alp = bow.alpha + 1.0;
     bow.alm = bow.alpha - 1.0;
     bow.Ka1 = bow.Kw / bow.alp;
@@ -1575,6 +1595,18 @@ void BowedString::coulombNewton(double &fric, double Fc, double MF2, Bow &bow)
 
     if (Fc < 0.0) Fc = 0.0;
 
+    // FuncF(V) = V + bu + MF2*mu*Fc*(2/pi)*atan(coeff*V) is strictly increasing
+    // in V and the friction term is bounded by MF2*mu*Fc, so the single root
+    // lies in [-bu - MF2*mu*Fc, -bu + MF2*mu*Fc]. Plain Newton on the steep
+    // arctangent overshoots and can cycle for the full million iterations
+    // (e.g. when a finger lands on a string that is already vibrating), which
+    // made renders crawl. Keep the bracket and fall back to bisection whenever
+    // a Newton step would leave it: same root, guaranteed convergence.
+    double bound = fabs(MF2) * mu * Fc;
+    double lo = -bow.bu - bound, hi = -bow.bu + bound;
+    if (bow.Vrel < lo) bow.Vrel = lo;
+    if (bow.Vrel > hi) bow.Vrel = hi;
+
     while (res > tol) {
 	frictionFingersNeck(fric, dfric, bow.Vrel);
 	fric = mu * fric;
@@ -1583,13 +1615,17 @@ void BowedString::coulombNewton(double &fric, double Fc, double MF2, Bow &bow)
 	FuncF = bow.Vrel + bow.bu + MF2*R;
 	Rprime = dfric * Fc;
 	FuncFprime = 1.0 + MF2*Rprime;
+	if (FuncF > 0.0) hi = bow.Vrel;
+	else lo = bow.Vrel;
 	Vrelnew = bow.Vrel - FuncF / FuncFprime;
+	if (!(Vrelnew > lo) || !(Vrelnew < hi)) Vrelnew = 0.5 * (lo + hi);
 	res = fabs(bow.Vrel - Vrelnew);
 	bow.Vrel = Vrelnew;
+	if ((hi - lo) <= tol) break;
 
 	it = it + 1;
-	if (it > 1000000) {
-	    logMessage(5, "Didn't reach a solution in coulombNewton after 1000000 iterations");
+	if (it > 1000) {
+	    logMessage(5, "Didn't reach a solution in coulombNewton after 1000 iterations");
 	    break;
 	}
     }
