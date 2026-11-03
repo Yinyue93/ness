@@ -23,7 +23,7 @@ void TestMatlabParser::testMatlabParser()
 
     // check scalars are as expected
     vector<MatlabScalar> *scalars = mp->getScalars();
-    CPPUNIT_ASSERT_EQUAL(6, (int)scalars->size());
+    CPPUNIT_ASSERT_EQUAL(7, (int)scalars->size());
     // pi is defined automatically by the parser and should be first
     CPPUNIT_ASSERT(scalars->at(0).name == "pi");
     CPPUNIT_ASSERT_DOUBLES_EQUAL(3.1415927, scalars->at(0).value, 1e-6);
@@ -37,6 +37,8 @@ void TestMatlabParser::testMatlabParser()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(66.0, scalars->at(4).value, 1e-10);
     CPPUNIT_ASSERT(scalars->at(5).name == "v");
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10.0, scalars->at(5).value, 1e-10);
+    CPPUNIT_ASSERT(scalars->at(6).name == "u");
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(2501.0, scalars->at(6).value, 1e-10);
 
     // check arrays are as expected
     vector<MatlabArray> *arrays = mp->getArrays();

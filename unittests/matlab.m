@@ -37,3 +37,6 @@ w = str2(2).i;
 v = cellarray{2,2}(2,1);
 
 arr3 = cellarray{1,2};
+
+% exponent with an explicit plus sign, followed by a binary plus
+u = 2.5e+3 + 1;

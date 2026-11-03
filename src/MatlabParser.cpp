@@ -125,8 +125,10 @@ bool MatlabParser::getNextToken(MatlabToken *tok)
 			    (d[pos] == 'e') ||
 			    (d[pos] == 'E') ||
 			    (d[pos] == '-') ||
+			    (d[pos] == '+') ||
 			    (d[pos] == '.'))) {
-	    if (d[pos] == '-') {
+	    // a sign is only part of the number as an exponent sign (1e-5, 1e+5)
+	    if ((d[pos] == '-') || (d[pos] == '+')) {
 		if ((d[pos-1] != 'e') &&
 		    (d[pos-1] != 'E')) break;
 	    }
